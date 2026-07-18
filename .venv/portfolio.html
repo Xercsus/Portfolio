@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Krish Kiran</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* === CSS STYLING & ANIMATIONS === */
+        :root {
+            --primary-color: #0ea5e9;
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* Navbar - Glassmorphism */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 8%;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .logo {
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            background-clip: text; 
+            -webkit-text-fill-color: transparent;
+            animation: pulse 3s infinite;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links li a {
+            font-size: 1rem;
+            font-weight: 600;
+            position: relative;
+            transition: color 0.3s;
+        }
+
+        .nav-links li a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links li a:hover::after {
+            width: 100%;
+        }
+
+        /* Sections */
+        section {
+            padding: 120px 10% 80px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.8rem;
+            margin-bottom: 60px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            position: relative;
+        }
+
+        .section-title i {
+            color: var(--primary-color);
+        }
+
+        /* Hero Section */
+        #home {
+            text-align: center;
+            align-items: center;
+        }
+
+        #home h1 {
+            font-size: 4.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(120deg, #b095e7 20%, #2c4ae0 40%, #3885f8 60%, #e2757c 80%);
+            background-size: 200% 100% auto;
+            background-position: 0% center; 
+            -webkit-background-clip: text;
+            background-clip: text; 
+            -webkit-text-fill-color: transparent;
+            color : transparent;
+            animation: shine 2s linear infinite; 
+        }
+        @keyframes shine { 0% {background-position: 0% center;} 100% {background-position:200% center;} }
+
+        #home h3 {
+            font-size: 1.8rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        #home p {
+            max-width: 600px;
+            margin: 0 auto 30px;
+            font-size: 1.1rem;
+            color: #cbd5e1;
+        }
+
+        /* Glassmorphism Cards */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 35px;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            padding: 40px 30px;
+            border-radius: 16px;
+            text-align: center;
+            transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .card:hover::before { left: 100%; }
+        .card:hover { transform: translateY(-15px); border-color: var(--primary-color); box-shadow: 0 15px 30px rgba(14, 165, 233, 0.2); }
+        .card i { font-size: 3rem; color: var(--primary-color); margin-bottom: 20px; transition: transform 0.3s ease; }
+        .card:hover i { transform: scale(1.2); }
+        .card h3 { font-size: 1.5rem; margin-bottom: 10px; }
+
+        /* Profiles Specific */
+        .profiles-container { display: flex; justify-content: center; gap: 25px; flex-wrap: wrap; }
+        .profile-btn { padding: 15px 30px; border-radius: 50px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); color: white; display: flex; align-items: center; gap: 12px; font-size: 1.1rem; font-weight: 600; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .profile-btn i { font-size: 1.4rem; }
+        .profile-btn:hover { background: var(--primary-color); border-color: var(--primary-color); transform: scale(1.1) translateY(-5px); box-shadow: 0 10px 20px rgba(14, 165, 233, 0.4); }
+
+        /* Contact Section */
+        .contact-container { display: flex; justify-content: center; gap: 60px; flex-wrap: wrap; background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 50px; border-radius: 20px; backdrop-filter: blur(10px); }
+        .contact-item { display: flex; align-items: center; gap: 20px; font-size: 1.3rem; transition: color 0.3s ease; }
+        .contact-item:hover { color: var(--primary-color); }
+        .contact-item i { font-size: 2rem; color: var(--primary-color); animation: bounce 2s infinite; }
+
+        footer { text-align: center; padding: 30px; background: rgba(0,0,0,0.4); color: var(--text-muted); border-top: 1px solid var(--glass-border); }
+
+        /* ========================================= */
+        /* CHAT / VOICE AGENT WIDGET STYLES          */
+        /* ========================================= */
+        
+        #chat-toggle-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.85);
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 15px rgba(14, 165, 233, 0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        #chat-toggle-btn:hover {
+            transform: scale(1.1);
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 0 25px rgba(14, 165, 233, 0.6);
+        }
+
+        #chat-widget {
+            position: fixed;
+            bottom: 110px;
+            right: 30px;
+            width: 360px;
+            height: 520px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            border: 1px solid var(--primary-color);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5), 0 0 20px rgba(14, 165, 233, 0.2);
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 9999;
+        }
+
+        #chat-header {
+            background: rgba(14, 165, 233, 0.15);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 15px 20px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.1rem;
+        }
+
+        #close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: color 0.2s;
+        }
+
+        #close-btn:hover { color: #ef4444; }
+
+        #chat-history {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Custom Scrollbar for Chat */
+        #chat-history::-webkit-scrollbar { width: 6px; }
+        #chat-history::-webkit-scrollbar-track { background: transparent; }
+        #chat-history::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+
+        .message { padding: 12px 16px; border-radius: 12px; max-width: 85%; font-size: 0.95rem; line-height: 1.5; word-wrap: break-word; }
+        .user-msg { background: var(--primary-color); color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .ai-msg { background: rgba(255, 255, 255, 0.08); color: var(--text-main); align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid var(--glass-border); }
+        
+        #status-bar { font-size: 0.8rem; color: var(--text-muted); padding: 5px 20px; text-align: right; font-style: italic; }
+        
+        #input-area {
+            display: flex;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid var(--glass-border);
+            gap: 10px;
+        }
+
+        #input-area input[type="text"] {
+            flex-grow: 1;
+            padding: 10px 15px;
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            outline: none;
+            font-family: 'Poppins', sans-serif;
+            transition: border-color 0.3s;
+        }
+
+        #input-area input[type="text"]:focus { border-color: var(--primary-color); }
+        
+        .action-btn {
+            padding: 10px;
+            width: 42px;
+            height: 42px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+
+        #send-btn { background: var(--primary-color); color: white; }
+        #send-btn:hover { background: #0284c7; }
+        
+        #mic-btn { background: rgba(255, 255, 255, 0.1); color: var(--text-main); border: 1px solid var(--glass-border); }
+        #mic-btn:hover { background: rgba(255, 255, 255, 0.2); }
+        
+        #mic-btn.listening {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+            animation: pulse-mic 1.5s infinite;
+        }
+
+        /* Animations */
+        @keyframes pulse-mic { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        .hidden-anim { opacity: 0; transform: translateY(60px); transition: opacity 0.8s ease-out, transform 0.8s ease-out; }
+        .show { opacity: 1; transform: translateY(0); }
+        .grid-container .card:nth-child(1) { transition-delay: 0.1s; }
+        .grid-container .card:nth-child(2) { transition-delay: 0.2s; }
+        .grid-container .card:nth-child(3) { transition-delay: 0.3s; }
+        .grid-container .card:nth-child(4) { transition-delay: 0.4s; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } 60% { transform: translateY(-5px); } }
+        @media (max-width: 768px) { .nav-links { display: none; } #home h1 { font-size: 3rem; } .section-title { font-size: 2.2rem; } #chat-widget { width: 90vw; right: 5vw; height: 60vh; bottom: 100px; } }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <header>
+        <div class="logo">Krish Kiran.</div>
+        <ul class="nav-links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#education">Education</a></li>
+            <li><a href="#skills">Skills</a></li>
+            <li><a href="#projects">Projects</a></li>
+            <li><a href="#profiles">Profiles</a></li>
+            <li><a href="#certificates">Credits</a></li>
+        </ul>
+    </header>
+
+    <!-- Home/Hero Section -->
+    <section id="home" class="hidden-anim">
+        <h1>Hi, I'm Krish Kiran</h1>
+        <h3>Applied AI Engineer</h3>
+        <p>"Passionate about writing clean code and building meaningful digital experiences."</p>
+    </section>
+
+    <!-- Education Section -->
+    <section id="education">
+        <h2 class="section-title hidden-anim">Education <i class="fa-solid fa-graduation-cap"></i></h2>
+        <div class="grid-container">
+            <div class="card hidden-anim">
+                <i class="fa-solid fa-school"></i>
+                <h3>Graduation</h3>
+                <p><strong>Kumaun University</strong></p>
+                <p>B.Sc in Physics Chemistry Mathematics</p>
+                <p style="color: var(--primary-color); margin-top: 10px;">2019 - 2022</p>
+            </div>
+            <div class="card hidden-anim">
+                <i class="fa-solid fa-user-graduate"></i>
+                <h3>Post-Graduation</h3>
+                <p><strong>Galgotias University</strong></p>
+                <p>MCA in Artificial Intelligence and Machine Learning</p>
+                <p style="color: var(--primary-color); margin-top: 10px;">2024 - 2026</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Skills Section -->
+    <section id="skills">
+        <h2 class="section-title hidden-anim">Skills <i class="fa-solid fa-laptop-code"></i></h2>
+        <div class="grid-container">
+            <div class="card hidden-anim">
+                <i class="fa-brands fa-html5"></i>
+                <h3>Frontend</h3>
+                <p>HTML, CSS, JavaScript, React, Tailwind</p>
+            </div>
+            <div class="card hidden-anim">
+                <i class="fa-brands fa-python"></i>
+                <h3>Backend</h3>
+                <p>Node.js, Python, Java, C++</p>
+            </div>
+            <div class="card hidden-anim">
+                <i class="fa-solid fa-database"></i>
+                <h3>Databases & Cloud</h3>
+                <p>MySQL, MongoDB, AWS, Git</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section id="projects">
+        <h2 class="section-title hidden-anim">Projects <i class="fa-solid fa-briefcase"></i></h2>
+        <div class="grid-container">
+            <div class="card hidden-anim">
+                <h3>SHL recommender</h3>
+                <p>Built a high-performance AI recommendation service using Python, FastAPI, RAG, and LLMs to deliver scalable, low-latency, and personalized recommendations.</p>
+                <br>
+                <a href="#" style="color: var(--primary-color); font-weight: bold;"><i class="fa-solid fa-link" style="font-size: 1rem; margin:0;"></i> View Project</a>
+            </div>
+            <div class="card hidden-anim">
+                <h3>AI Doctor 2.0</h3>
+                <p>Built an AI-powered healthcare assistant with Python, integrating LLMs, speech recognition, and medical image analysis for reliable interactions.</p>
+                <br>
+                <a href="#" style="color: var(--primary-color); font-weight: bold;"><i class="fa-solid fa-link" style="font-size: 1rem; margin:0;"></i> View Project</a>
+            </div>
+            <div class="card hidden-anim">
+                <h3>Sarcasm Detection System</h3>
+                <p>Designed a multimodal AI system combining NLP and Computer Vision for text and image classification using ML pipelines and CNN models.</p>
+                <br>
+                <a href="#" style="color: var(--primary-color); font-weight: bold;"><i class="fa-solid fa-link" style="font-size: 1rem; margin:0;"></i> View Project</a>
+            </div>
+            <div class="card hidden-anim">
+                <h3>Orivex - Virtual World</h3>
+                <p>Developed a full-stack decentralized platform using Next.js, React, TypeScript, PostgreSQL, and REST APIs with smart contracts.</p>
+                <br>
+                <a href="#" style="color: var(--primary-color); font-weight: bold;"><i class="fa-solid fa-link" style="font-size: 1rem; margin:0;"></i> View Project</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Profiles Section -->
+    <section id="profiles">
+        <h2 class="section-title hidden-anim">My Profiles <i class="fa-solid fa-id-badge"></i></h2>
+        <div class="profiles-container hidden-anim">
+            <a href="https://github.com/Xercsus" target="_blank" class="profile-btn">
+                <i class="fa-brands fa-github"></i> GitHub
+            </a>
+            <a href="https://linkedin.com/in/krish-kiran-156b67371/" target="_blank" class="profile-btn">
+                <i class="fa-brands fa-linkedin"></i> LinkedIn
+            </a>
+            <a href="https://leetcode.com/u/krishkiran03/" target="_blank" class="profile-btn">
+                <i class="fa-solid fa-code"></i> LeetCode
+            </a>
+            <a href="https://hackerrank.com/profile/krishkiran0304" target="_blank" class="profile-btn">
+                <i class="fa-brands fa-hackerrank"></i> HackerRank
+            </a>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact">
+        <h2 class="section-title hidden-anim">Contact Me <i class="fa-solid fa-address-book"></i></h2>
+        <div class="contact-container hidden-anim">
+            <div class="contact-item">
+                <i class="fa-solid fa-envelope"></i>
+                <p>krishkiran0304@gmail.com</p>
+            </div>
+            <div class="contact-item">
+                <i class="fa-solid fa-phone"></i>
+                <p>+91 7895217955</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>Built with ❤️ by Krish Kiran &copy; 2026</p>
+    </footer>
+
+    <!-- ========================================== -->
+    <!-- FLOATING CHAT WIDGET HTML                  -->
+    <!-- ========================================== -->
+    <button id="chat-toggle-btn" title="Chat with AI Agent">
+        <i class="fa-solid fa-robot"></i>
+    </button>
+
+    <div id="chat-widget">
+        <div id="chat-header">
+            <span><i class="fa-solid fa-microchip"></i> Krish Kiran AI</span>
+            <button id="close-btn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="chat-history">
+            <div class="message ai-msg">Hi! I am Krish Kiran's AI assistant. You can type or use the microphone to ask me about his skills, projects, or resume.</div>
+        </div>
+        <div id="status-bar">Connecting...</div>
+        <div id="input-area">
+            <input type="text" id="user-input" placeholder="Type or tap mic...">
+            <button class="action-btn" id="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+            <button class="action-btn" id="mic-btn" title="Click to speak"><i class="fa-solid fa-microphone"></i></button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SCRIPTS                                    -->
+    <!-- ========================================== -->
+    <script>
+        // 1. Scroll Animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('show');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.hidden-anim').forEach((el) => observer.observe(el));
+
+        // 2. Chat Widget Toggle Logic
+        const chatToggleBtn = document.getElementById('chat-toggle-btn');
+        const chatWidget = document.getElementById('chat-widget');
+        const closeBtn = document.getElementById('close-btn');
+
+        chatToggleBtn.addEventListener('click', () => {
+            chatWidget.style.display = 'flex';
+            chatToggleBtn.style.display = 'none';
+        });
+
+        closeBtn.addEventListener('click', () => {
+            chatWidget.style.display = 'none';
+            chatToggleBtn.style.display = 'flex';
+        });
+
+        // 3. WebSocket & Voice Logic
+        const chatHistory = document.getElementById('chat-history');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const micBtn = document.getElementById('mic-btn');
+        const statusBar = document.getElementById('status-bar');
+
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        // Connects to the FastAPI backend route you provided earlier
+        const ws = new WebSocket(`${wsProtocol}//${window.location.host}/stream-voice`);
+                let currentAiMessageDiv = null;
+        let completeAiText = ""; // NEW: Variable to store the full sentence
+
+        ws.onopen = () => statusBar.textContent = "🟢 Online";
+        ws.onclose = () => statusBar.textContent = "🔴 Disconnected. Refresh page.";
+        
+        ws.onmessage = (event) => {
+            const response = JSON.parse(event.data);
+
+            if (response.type === 'status') {
+                statusBar.textContent = response.data;
+            } 
+            else if (response.type === 'text_chunk') {
+                // 1. Build the text box UI
+                if (!currentAiMessageDiv) {
+                    currentAiMessageDiv = document.createElement('div');
+                    currentAiMessageDiv.className = 'message ai-msg';
+                    chatHistory.appendChild(currentAiMessageDiv);
+                }
+                currentAiMessageDiv.textContent += response.data;
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+                
+                // 2. Add to our complete text string
+                completeAiText += response.data;
+            } 
+            else if (response.type === 'text_end') {
+                currentAiMessageDiv = null;
+                
+                // --- NEW: NATIVE BROWSER VOICE ---
+                if (completeAiText.trim() !== "" && 'speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(completeAiText);
+                    utterance.lang = 'en-US';
+                    utterance.rate = 1.0; // Speed of voice
+                    window.speechSynthesis.speak(utterance);
+                }
+                
+                completeAiText = ""; // Reset for the next question
+                statusBar.textContent = "🟢 Online";
+            } 
+            else if (response.type === 'audio') {
+                // ElevenLabs, it will still play here!
+                const audio = new Audio("data:audio/mp3;base64," + response.data);
+                audio.play().catch(e => console.error("Audio block:", e));
+                statusBar.textContent = "🟢 Online";
+            }
+        };
+
+        function sendMessage(text) {
+            if (!text || ws.readyState !== WebSocket.OPEN) return;
+            
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message user-msg';
+            msgDiv.textContent = text;
+            chatHistory.appendChild(msgDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+            
+            ws.send(text);
+            userInput.value = '';
+        }
+
+        sendBtn.addEventListener('click', () => sendMessage(userInput.value.trim()));
+        userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(userInput.value.trim()); });
+
+        // Speech-to-Text (Native Browser API)
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                micBtn.classList.add('listening');
+                userInput.placeholder = "Listening...";
+                statusBar.textContent = "🎤 Listening to you...";
+            };
+            
+            recognition.onend = () => {
+                micBtn.classList.remove('listening');
+                userInput.placeholder = "Type or tap mic...";
+            };
+            
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                sendMessage(transcript);
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Microphone Error:", event.error);
+                statusBar.textContent = "🔴 Mic Error: " + event.error;
+                if (event.error === 'not-allowed') {
+                    alert("Microphone access denied. Please allow it in settings.");
+                } else if (event.error === 'network') {
+                    alert("Microphone blocked. Use 'localhost' or 'https://'.");
+                }
+            };
+
+            micBtn.addEventListener('click', () => {
+                try {
+                    recognition.start();
+                } catch (error) {
+                    console.error("Mic running/failed.", error);
+                }
+            });
+
+        } else {
+            micBtn.style.display = 'none';
+            userInput.placeholder = "Mic not supported here.";
+            console.warn("Speech Recognition API is not supported in this browser. Use Chrome/Edge.");
+        }
+    </script>
+</body>
+</html>
