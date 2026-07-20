@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse
 from dotenv import load_dotenv
 from groq import AsyncGroq
 
+
 # ==========================================
 # 1. SETUP & INITIALIZATION
 # ==========================================
@@ -123,8 +124,8 @@ async def generate_rag_response(user_text: str, context: str):
 
 async def text_to_speech(text: str) -> bytes:
     """Generates audio bytes via ElevenLabs API."""
-    voice_id = "agent_4501kxta72dfegpra6nsx48phd35" 
-    url = f"https://elevenlabs.io/app/agents/agents/agent_4501kxta72dfegpra6nsx48phd35?branchId=agtbrch_2301kxta730ffg4bj5q3h80vdhpk{voice_id}"
+    voice_id = "ljX1ZrXuDIIRVcmiVSyR" 
+    url = f"https://elevenlabs.io/app/api/voice-library?voiceId=ljX1ZrXuDIIRVcmiVSyR{voice_id}"
     
     headers = {
         "xi-api-key": os.environ.get("ELEVENLABS_API_KEY"),
@@ -153,9 +154,9 @@ async def text_to_speech(text: str) -> bytes:
 # ==========================================
 @app.get("/")
 async def serve_frontend():
-    html_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "portfolio.html")
+    html_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "index.html")
     if not os.path.exists(html_path):
-        return {"error": "portfolio.html not found in the root directory."}
+        return {"error": "index.html not found in the root directory."}
     return FileResponse(html_path)
 
 @app.websocket("/stream-voice")
