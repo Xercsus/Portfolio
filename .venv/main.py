@@ -123,8 +123,8 @@ async def generate_rag_response(user_text: str, context: str):
 
 async def text_to_speech(text: str) -> bytes:
     """Generates audio bytes via ElevenLabs API."""
-    voice_id = "21m00Tcm4TlvDq8ikWAM" 
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+    voice_id = "agent_4501kxta72dfegpra6nsx48phd35" 
+    url = f"https://elevenlabs.io/app/agents/agents/agent_4501kxta72dfegpra6nsx48phd35?branchId=agtbrch_2301kxta730ffg4bj5q3h80vdhpk{voice_id}"
     
     headers = {
         "xi-api-key": os.environ.get("ELEVENLABS_API_KEY"),
