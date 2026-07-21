@@ -37,6 +37,30 @@
             overflow-x: hidden;
         }
 
+        /* Animated background orbs */
+        .bg-orbs {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            animation: float 20s ease-in-out infinite;
+        }
+        .orb-1 { width: 400px; height: 400px; background: #0ea5e9; top: 10%; left: 10%; animation-delay: 0s; }
+        .orb-2 { width: 350px; height: 350px; background: #818cf8; top: 50%; right: 10%; animation-delay: -7s; }
+        .orb-3 { width: 300px; height: 300px; background: #e2757c; bottom: 10%; left: 40%; animation-delay: -14s; }
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -40px) scale(1.05); }
+            66% { transform: translate(-20px, 20px) scale(0.95); }
+        }
+
         a {
             text-decoration: none;
             color: inherit;
@@ -55,7 +79,12 @@
             width: 100%;
             top: 0;
             z-index: 1000;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        header.scrolled {
+            padding: 12px 8%;
+            background: rgba(15, 23, 42, 0.92);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
         }
 
         .logo {
@@ -78,6 +107,7 @@
             position: relative;
             transition: color 0.3s;
         }
+        .nav-links li a.active { color: var(--primary-color); }
 
         .nav-links li a::after {
             content: '';
@@ -149,6 +179,30 @@
             color: #cbd5e1;
         }
 
+        .hero-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 32px;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #0ea5e9, #818cf8);
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeInUp 1s ease 0.5s both;
+        }
+        .hero-cta:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 10px 30px rgba(14, 165, 233, 0.4);
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         /* Glassmorphism Cards */
         .grid-container {
             display: grid;
@@ -183,6 +237,30 @@
         .card i { font-size: 3rem; color: var(--primary-color); margin-bottom: 20px; transition: transform 0.3s ease; }
         .card:hover i { transform: scale(1.2); }
         .card h3 { font-size: 1.5rem; margin-bottom: 10px; }
+
+        /* Project cards */
+        .project-card { text-align: left; }
+        .project-card .project-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            transition: transform 0.3s ease;
+        }
+        .project-card:hover .project-icon { transform: scale(1.15) rotate(-5deg); }
+        .project-card .project-desc { color: var(--text-muted); font-size: 0.92rem; line-height: 1.7; margin-bottom: 16px; }
+        .tech-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .tech-tags span {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: rgba(14, 165, 233, 0.12);
+            color: #38bdf8;
+            border: 1px solid rgba(14, 165, 233, 0.25);
+            transition: background 0.3s ease;
+        }
+        .project-card:hover .tech-tags span { background: rgba(14, 165, 233, 0.22); }
+        .project-year { color: var(--primary-color); font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; }
 
         /* Profiles Specific */
         .profiles-container { display: flex; justify-content: center; gap: 25px; flex-wrap: wrap; }
@@ -221,6 +299,11 @@
             justify-content: center;
             align-items: center;
             z-index: 9999;
+            animation: pulse-ring 2.5s ease infinite;
+        }
+        @keyframes pulse-ring {
+            0%, 100% { box-shadow: 0 0 15px rgba(14, 165, 233, 0.3); }
+            50% { box-shadow: 0 0 25px rgba(14, 165, 233, 0.6), 0 0 0 8px rgba(14, 165, 233, 0.1); }
         }
 
         #chat-toggle-btn:hover {
@@ -241,10 +324,15 @@
             border-radius: 16px;
             border: 1px solid var(--primary-color);
             box-shadow: 0 15px 35px rgba(0,0,0,0.5), 0 0 20px rgba(14, 165, 233, 0.2);
-            display: none; /* Hidden by default */
+            display: none;
             flex-direction: column;
             overflow: hidden;
             z-index: 9999;
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         #chat-header {
@@ -283,9 +371,32 @@
         #chat-history::-webkit-scrollbar-track { background: transparent; }
         #chat-history::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
 
-        .message { padding: 12px 16px; border-radius: 12px; max-width: 85%; font-size: 0.95rem; line-height: 1.5; word-wrap: break-word; }
+        .message { padding: 12px 16px; border-radius: 12px; max-width: 85%; font-size: 0.95rem; line-height: 1.5; word-wrap: break-word; animation: msgIn 0.3s ease; }
+        @keyframes msgIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         .user-msg { background: var(--primary-color); color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
         .ai-msg { background: rgba(255, 255, 255, 0.08); color: var(--text-main); align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid var(--glass-border); }
+
+        .typing-indicator {
+            display: flex;
+            gap: 5px;
+            padding: 12px 16px;
+            align-self: flex-start;
+        }
+        .typing-indicator span {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            animation: typingBounce 1.4s ease infinite;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-8px); opacity: 1; }
+        }
         
         #status-bar { font-size: 0.8rem; color: var(--text-muted); padding: 5px 20px; text-align: right; font-style: italic; }
         
@@ -342,16 +453,28 @@
         @keyframes pulse-mic { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
         .hidden-anim { opacity: 0; transform: translateY(60px); transition: opacity 0.8s ease-out, transform 0.8s ease-out; }
         .show { opacity: 1; transform: translateY(0); }
-        .grid-container .card:nth-child(1) { transition-delay: 0.1s; }
-        .grid-container .card:nth-child(2) { transition-delay: 0.2s; }
-        .grid-container .card:nth-child(3) { transition-delay: 0.3s; }
-        .grid-container .card:nth-child(4) { transition-delay: 0.4s; }
+        .grid-container .card:nth-child(1) { transition-delay: 0.05s; }
+        .grid-container .card:nth-child(2) { transition-delay: 0.1s; }
+        .grid-container .card:nth-child(3) { transition-delay: 0.15s; }
+        .grid-container .card:nth-child(4) { transition-delay: 0.2s; }
+        .grid-container .card:nth-child(5) { transition-delay: 0.25s; }
+        .grid-container .card:nth-child(6) { transition-delay: 0.3s; }
+        .grid-container .card:nth-child(7) { transition-delay: 0.35s; }
+        .grid-container .card:nth-child(8) { transition-delay: 0.4s; }
+        .grid-container .card:nth-child(9) { transition-delay: 0.45s; }
+        .grid-container .card:nth-child(10) { transition-delay: 0.5s; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
         @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } 60% { transform: translateY(-5px); } }
         @media (max-width: 768px) { .nav-links { display: none; } #home h1 { font-size: 3rem; } .section-title { font-size: 2.2rem; } #chat-widget { width: 90vw; right: 5vw; height: 60vh; bottom: 100px; } }
     </style>
 </head>
 <body>
+
+    <div class="bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
 
     <!-- Navigation Bar -->
     <header>
@@ -371,6 +494,9 @@
         <h1>Hi, I'm Krish Kiran</h1>
         <h3>Applied AI Engineer</h3>
         <p>"Passionate about writing clean code and building meaningful digital experiences."</p>
+        <button class="hero-cta" onclick="document.getElementById('chat-toggle-btn').click()">
+            <i class="fa-solid fa-robot"></i> Talk to my AI Assistant
+        </button>
     </section>
 
     <!-- Education Section -->
@@ -420,30 +546,80 @@
     <section id="projects">
         <h2 class="section-title hidden-anim">Projects <i class="fa-solid fa-briefcase"></i></h2>
         <div class="grid-container">
-            <div class="card hidden-anim">
-                <h3>SHL recommender</h3>
-                <p>Built a high-performance AI recommendation service using Python, FastAPI, RAG, and LLMs to deliver scalable, low-latency, and personalized recommendations.</p>
-                <br>
-                <a href="#" style="color: var(--primary-color); font-weight: bold;"><i class="fa-solid fa-link" style="font-size: 1rem; margin:0;"></i> View Project</a>
+
+            <div class="card hidden-anim project-card">
+                <div class="project-icon"><i class="fa-solid fa-gamepad"></i></div>
+                <p class="project-year">2026</p>
+                <h3>FingerFlick</h3>
+                <p class="project-desc">Multiplayer finger cricket game with a custom game engine featuring randomized toss generation, score tracking, innings management, and real-time match logic.</p>
+                <div class="tech-tags"><span>JavaScript</span><span>React.js</span><span>Game Logic</span></div>
             </div>
-            <div class="card hidden-anim">
+
+            <div class="card hidden-anim project-card">
+                <div class="project-icon"><i class="fa-solid fa-microphone"></i></div>
+                <p class="project-year">2026</p>
+                <h3>Portfolio AI Voice Agent</h3>
+                <p class="project-desc">This portfolio's AI voice assistant powered by Groq LLM, ElevenLabs TTS, RAG pipeline, and guardrails — deployed on Vercel with a real-time chat widget.</p>
+                <div class="tech-tags"><span>FastAPI</span><span>Python</span><span>ElevenLabs</span><span>Groq</span></div>
+            </div>
+
+            <div class="card hidden-anim project-card">
+                <div class="project-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                <h3>VibeTime</h3>
+                <p class="project-desc">Mobile timetable app with streak tracking, reminders, subscription screens, and responsive layouts. Local data storage with Material Design widgets.</p>
+                <div class="tech-tags"><span>Flutter</span><span>Local Storage</span><span>Responsive UI</span></div>
+            </div>
+
+            <div class="card hidden-anim project-card">
+                <div class="project-icon"><i class="fa-solid fa-closed-captioning"></i></div>
+                <h3>Subscraft AI</h3>
+                <p class="project-desc">Fully client-side web app with a real-time subtitle editor UI, animated Canvas rendering, and responsive controls — complex interactive frontend engineering.</p>
+                <div class="tech-tags"><span>Next.js 14</span><span>ReactJS</span><span>Canvas</span><span>Web APIs</span></div>
+            </div>
+
+            <div class="card hidden-anim project-card">
+                <div class="project-icon"><i class="fa-solid fa-camera"></i></div>
+                <h3>pocketPhoto</h3>
+                <p class="project-desc">Interactive web app with image upload, crop tool, and spec-selector components — reusable, maintainable, and responsive across devices.</p>
+                <div class="tech-tags"><span>Next.js</span><span>ReactJS</span><span>CSS3</span></div>
+            </div>
+
+            <div class="card hidden-anim project-card">
+                <div class="project-icon"><i class="fa-solid fa-golf-ball-tee"></i></div>
+                <p class="project-year">2025</p>
+                <h3>GolfDraw</h3>
+                <p class="project-desc">Production responsive web app with reusable React components, a custom CSS design system, and animations optimized for cross-browser mobile performance.</p>
+                <div class="tech-tags"><span>ReactJS</span><span>Next.js</span><span>CSS3</span><span>REST APIs</span></div>
+            </div>
+
+            <div class="card hidden-anim project-card">
+                <div class="project-icon"><i class="fa-solid fa-brain"></i></div>
+                <h3>SHL Recommender</h3>
+                <p class="project-desc">High-performance AI recommendation service using Python, FastAPI, RAG, and LLMs to deliver scalable, low-latency, personalized recommendations.</p>
+                <div class="tech-tags"><span>Python</span><span>FastAPI</span><span>RAG</span><span>LLMs</span></div>
+            </div>
+
+            <div class="card hidden-anim project-card">
+                <div class="project-icon"><i class="fa-solid fa-stethoscope"></i></div>
                 <h3>AI Doctor 2.0</h3>
-                <p>Built an AI-powered healthcare assistant with Python, integrating LLMs, speech recognition, and medical image analysis for reliable interactions.</p>
-                <br>
-                <a href="#" style="color: var(--primary-color); font-weight: bold;"><i class="fa-solid fa-link" style="font-size: 1rem; margin:0;"></i> View Project</a>
+                <p class="project-desc">AI-powered healthcare assistant integrating LLMs, speech recognition, and medical image analysis for reliable patient interactions.</p>
+                <div class="tech-tags"><span>Python</span><span>LLMs</span><span>Speech Recognition</span></div>
             </div>
-            <div class="card hidden-anim">
-                <h3>Sarcasm Detection System</h3>
-                <p>Designed a multimodal AI system combining NLP and Computer Vision for text and image classification using ML pipelines and CNN models.</p>
-                <br>
-                <a href="#" style="color: var(--primary-color); font-weight: bold;"><i class="fa-solid fa-link" style="font-size: 1rem; margin:0;"></i> View Project</a>
+
+            <div class="card hidden-anim project-card">
+                <div class="project-icon"><i class="fa-solid fa-face-laugh-wink"></i></div>
+                <h3>Sarcasm Detection</h3>
+                <p class="project-desc">Multimodal AI system combining NLP and Computer Vision for text and image classification using ML pipelines and CNN models.</p>
+                <div class="tech-tags"><span>NLP</span><span>Computer Vision</span><span>TensorFlow</span></div>
             </div>
-            <div class="card hidden-anim">
-                <h3>Orivex - Virtual World</h3>
-                <p>Developed a full-stack decentralized platform using Next.js, React, TypeScript, PostgreSQL, and REST APIs with smart contracts.</p>
-                <br>
-                <a href="#" style="color: var(--primary-color); font-weight: bold;"><i class="fa-solid fa-link" style="font-size: 1rem; margin:0;"></i> View Project</a>
+
+            <div class="card hidden-anim project-card">
+                <div class="project-icon"><i class="fa-solid fa-globe"></i></div>
+                <h3>Orivex – Virtual World</h3>
+                <p class="project-desc">Full-stack decentralized platform using Next.js, React, TypeScript, PostgreSQL, REST APIs, and blockchain smart contracts.</p>
+                <div class="tech-tags"><span>Next.js</span><span>TypeScript</span><span>PostgreSQL</span><span>Blockchain</span></div>
             </div>
+
         </div>
     </section>
 
@@ -524,6 +700,34 @@
 
         document.querySelectorAll('.hidden-anim').forEach((el) => observer.observe(el));
 
+        // Navbar scroll effect + active link
+        const header = document.querySelector('header');
+        const navLinks = document.querySelectorAll('.nav-links a');
+        const sections = document.querySelectorAll('section');
+
+        window.addEventListener('scroll', () => {
+            header.classList.toggle('scrolled', window.scrollY > 50);
+
+            let current = '';
+            sections.forEach((section) => {
+                if (window.scrollY >= section.offsetTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+            navLinks.forEach((link) => {
+                link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+            });
+        });
+
+        // Smooth scroll for nav links
+        navLinks.forEach((link) => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = document.querySelector(link.getAttribute('href'));
+                if (target) target.scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+
         // 2. Chat Widget Toggle Logic
         const chatToggleBtn = document.getElementById('chat-toggle-btn');
         const chatWidget = document.getElementById('chat-widget');
@@ -539,7 +743,7 @@
             chatToggleBtn.style.display = 'flex';
         });
 
-        // 3. REST API Chat & ElevenLabs Voice Logic
+        // 3. REST API Chat & Voice Logic
         const chatHistory = document.getElementById('chat-history');
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
@@ -547,12 +751,14 @@
         const statusBar = document.getElementById('status-bar');
 
         let isProcessing = false;
+        let currentAudio = null;
 
         async function checkHealth() {
             try {
                 const res = await fetch('/api/health');
                 if (res.ok) {
-                    statusBar.textContent = '🟢 Online';
+                    const data = await res.json();
+                    statusBar.textContent = data.elevenlabs_configured ? '🟢 Online' : '🟢 Online (voice fallback)';
                     return true;
                 }
             } catch (e) {
@@ -564,27 +770,50 @@
 
         checkHealth();
 
-        async function playElevenLabsAudio(text) {
-            try {
-                statusBar.textContent = 'Generating audio...';
-                const res = await fetch('/api/tts', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text }),
-                });
-                if (!res.ok) {
-                    console.error('TTS failed:', await res.text());
-                    statusBar.textContent = '🟢 Online (voice unavailable)';
-                    return;
-                }
-                const data = await res.json();
-                const audio = new Audio('data:audio/mpeg;base64,' + data.audio);
-                await audio.play();
-                statusBar.textContent = '🟢 Online';
-            } catch (e) {
-                console.error('Audio playback error:', e);
-                statusBar.textContent = '🟢 Online (voice unavailable)';
+        function speakFallback(text) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        async function playAudio(text, audioBase64) {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
             }
+
+            if (audioBase64) {
+                try {
+                    statusBar.textContent = '🔊 Speaking...';
+                    currentAudio = new Audio('data:audio/mpeg;base64,' + audioBase64);
+                    await currentAudio.play();
+                    statusBar.textContent = '🟢 Online';
+                    return;
+                } catch (e) {
+                    console.error('ElevenLabs playback failed, using fallback:', e);
+                }
+            }
+
+            statusBar.textContent = '🔊 Speaking...';
+            speakFallback(text);
+            statusBar.textContent = '🟢 Online';
+        }
+
+        function showTypingIndicator() {
+            const el = document.createElement('div');
+            el.className = 'typing-indicator';
+            el.id = 'typing-indicator';
+            el.innerHTML = '<span></span><span></span><span></span>';
+            chatHistory.appendChild(el);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const el = document.getElementById('typing-indicator');
+            if (el) el.remove();
         }
 
         async function sendMessage(text) {
@@ -601,6 +830,7 @@
             userInput.value = '';
 
             statusBar.textContent = 'Thinking...';
+            showTypingIndicator();
 
             try {
                 const res = await fetch('/api/chat', {
@@ -608,6 +838,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: text }),
                 });
+
+                removeTypingIndicator();
 
                 if (!res.ok) {
                     throw new Error(await res.text());
@@ -620,8 +852,9 @@
                 chatHistory.appendChild(aiMsgDiv);
                 chatHistory.scrollTop = chatHistory.scrollHeight;
 
-                await playElevenLabsAudio(data.text);
+                await playAudio(data.text, data.audio);
             } catch (e) {
+                removeTypingIndicator();
                 console.error('Chat error:', e);
                 const errDiv = document.createElement('div');
                 errDiv.className = 'message ai-msg';

@@ -39,9 +39,12 @@ portfolio_documents = [
     "Project AI Doctor 2.0: Multimodal Healthcare Virtual Assistant. Built in Python integrating LLMs, speech recognition, and medical image analysis with fast, reliable interactions.",
     "Project Sarcasm Detection: A multimodal AI system combining NLP and Computer Vision for text and image classification. Uses TF-IDF, traditional ML pipelines, and CNNs in TensorFlow/Keras.",
     "Project Orivex: A full-stack decentralized virtual world platform using Next.js, React, TypeScript, PostgreSQL, REST APIs, and blockchain smart contracts.",
-    "Project Subscraft AI: A fully client-side web app with a real-time subtitle editor UI, animated Canvas rendering, and responsive controls.",
-    "Project FingerFlick: A reusable cross-platform finger cricket game with mobile UI for matchmaking, live game state, and an engine backed by a 38-test suite.",
-    "Project VibeTime: A timetable app with a custom notebook-aesthetic design system, reusable components, streak tracking, and a subscription paywall UI.",
+    "Project FingerFlick: Multiplayer Finger Cricket Game built with JavaScript and React.js. Features a custom game engine with randomized toss generation, score tracking, innings management, match logic, and responsive real-time UI.",
+    "Project VibeTime: Student Timetable Application built with Flutter, Local Storage, and Responsive UI. Features streak tracking, reminders, subscription screens, Material Design widgets, and optimized Android performance.",
+    "Project Subscraft AI: Browser-based frontend tool built with Next.js 14, ReactJS, Canvas, and Web APIs. Fully client-side web app with real-time subtitle editor UI, animated Canvas rendering, and responsive controls.",
+    "Project pocketPhoto: Interactive web app built with Next.js, ReactJS, and CSS3. Features image upload, crop tool, and spec-selector components with reusable, maintainable, responsive design.",
+    "Project GolfDraw: Responsive web application built with ReactJS, Next.js, CSS3, and REST APIs. Production app with reusable React components, custom CSS design system, animations, and cross-browser mobile-responsive performance.",
+    "Project Portfolio AI Voice Agent: This portfolio website features an AI voice assistant powered by Groq LLM, ElevenLabs text-to-speech, RAG pipeline, guardrails, and a real-time chat widget. Built with FastAPI, Python, and deployed on Vercel.",
     "Certifications: Krish holds certifications in Python Basic (HackerRank), BCG GenAI Job Simulation (Forage), Deloitte Data Analytics, and Tata GenAI Powered Data Analytics.",
 ]
 
@@ -245,6 +248,17 @@ Context:
     return response.choices[0].message.content
 
 
+def truncate_for_tts(text: str, max_chars: int = 400) -> str:
+    """Truncate text at a sentence boundary for TTS limits."""
+    if len(text) <= max_chars:
+        return text
+    truncated = text[:max_chars]
+    last_period = max(truncated.rfind("."), truncated.rfind("!"), truncated.rfind("?"))
+    if last_period > max_chars // 2:
+        return truncated[: last_period + 1]
+    return truncated + "..."
+
+
 async def text_to_speech(text: str) -> Optional[bytes]:
     """Generates audio bytes via ElevenLabs API."""
     api_key = os.environ.get("ELEVENLABS_API_KEY")
@@ -252,6 +266,7 @@ async def text_to_speech(text: str) -> Optional[bytes]:
         print("[ERROR] ELEVENLABS_API_KEY is missing.")
         return None
 
+    tts_text = truncate_for_tts(text)
     voice_id = "ljX1ZrXuDIIRVcmiVSyR"
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
@@ -262,7 +277,7 @@ async def text_to_speech(text: str) -> Optional[bytes]:
     }
 
     data = {
-        "text": text,
+        "text": tts_text,
         "model_id": "eleven_turbo_v2_5",
         "voice_settings": {
             "stability": 0.5,
@@ -270,7 +285,7 @@ async def text_to_speech(text: str) -> Optional[bytes]:
         },
     }
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=25.0) as client:
         try:
             response = await client.post(url, json=data, headers=headers)
             if response.status_code == 200:
@@ -319,11 +334,21 @@ async def chat_endpoint(request: ChatRequest):
     try:
         is_safe = await guardrail_check(user_text)
         if not is_safe:
-            return {"text": fallback, "blocked": True}
+            audio_bytes = await text_to_speech(fallback)
+            return {
+                "text": fallback,
+                "blocked": True,
+                "audio": base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else None,
+            }
 
         relevant_context = query_rag_database(user_text)
         response_text = await generate_rag_response(user_text, relevant_context)
-        return {"text": response_text, "blocked": False}
+        audio_bytes = await text_to_speech(response_text)
+        return {
+            "text": response_text,
+            "blocked": False,
+            "audio": base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else None,
+        }
 
     except Exception as e:
         print(f"[ERROR] Chat endpoint failed: {e}")
