@@ -1,7 +1,6 @@
 fastapi
 uvicorn
 groq
-chromadb
 httpx
 python-dotenv
-websockets
+pydantic

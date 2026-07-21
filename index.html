@@ -501,7 +501,7 @@
         <div id="chat-history">
             <div class="message ai-msg">Hi! I am Krish Kiran's AI assistant. You can type or use the microphone to ask me about his skills, projects, or resume.</div>
         </div>
-        <div id="status-bar">Connecting...</div>
+        <div id="status-bar">Checking connection...</div>
         <div id="input-area">
             <input type="text" id="user-input" placeholder="Type or tap mic...">
             <button class="action-btn" id="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
@@ -539,74 +539,100 @@
             chatToggleBtn.style.display = 'flex';
         });
 
-        // 3. WebSocket & Voice Logic
+        // 3. REST API Chat & ElevenLabs Voice Logic
         const chatHistory = document.getElementById('chat-history');
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
         const micBtn = document.getElementById('mic-btn');
         const statusBar = document.getElementById('status-bar');
 
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        // Connects to the FastAPI backend route you provided earlier
-        const ws = new WebSocket(`${wsProtocol}//${window.location.host}/stream-voice`);
-                let currentAiMessageDiv = null;
-        let completeAiText = ""; // NEW: Variable to store the full sentence
+        let isProcessing = false;
 
-        ws.onopen = () => statusBar.textContent = "🟢 Online";
-        ws.onclose = () => statusBar.textContent = "🔴 Disconnected. Refresh page.";
-        
-        ws.onmessage = (event) => {
-            const response = JSON.parse(event.data);
-
-            if (response.type === 'status') {
-                statusBar.textContent = response.data;
-            } 
-            else if (response.type === 'text_chunk') {
-                // 1. Build the text box UI
-                if (!currentAiMessageDiv) {
-                    currentAiMessageDiv = document.createElement('div');
-                    currentAiMessageDiv.className = 'message ai-msg';
-                    chatHistory.appendChild(currentAiMessageDiv);
+        async function checkHealth() {
+            try {
+                const res = await fetch('/api/health');
+                if (res.ok) {
+                    statusBar.textContent = '🟢 Online';
+                    return true;
                 }
-                currentAiMessageDiv.textContent += response.data;
-                chatHistory.scrollTop = chatHistory.scrollHeight;
-                
-                // 2. Add to our complete text string
-                completeAiText += response.data;
-            } 
-            else if (response.type === 'text_end') {
-                currentAiMessageDiv = null;
-                
-                // --- NEW: NATIVE BROWSER VOICE ---
-                if (completeAiText.trim() !== "" && 'speechSynthesis' in window) {
-                    const utterance = new SpeechSynthesisUtterance(completeAiText);
-                    utterance.lang = 'en-US';
-                    utterance.rate = 1.0; // Speed of voice
-                    window.speechSynthesis.speak(utterance);
-                }
-                
-                completeAiText = ""; // Reset for the next question
-                statusBar.textContent = "🟢 Online";
-            } 
-            else if (response.type === 'audio') {
-                // ElevenLabs, it will still play here!
-                const audio = new Audio("data:audio/mp3;base64," + response.data);
-                audio.play().catch(e => console.error("Audio block:", e));
-                statusBar.textContent = "🟢 Online";
+            } catch (e) {
+                console.error('Health check failed:', e);
             }
-        };
+            statusBar.textContent = '🔴 Offline. Refresh page.';
+            return false;
+        }
 
-        function sendMessage(text) {
-            if (!text || ws.readyState !== WebSocket.OPEN) return;
-            
+        checkHealth();
+
+        async function playElevenLabsAudio(text) {
+            try {
+                statusBar.textContent = 'Generating audio...';
+                const res = await fetch('/api/tts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text }),
+                });
+                if (!res.ok) {
+                    console.error('TTS failed:', await res.text());
+                    statusBar.textContent = '🟢 Online (voice unavailable)';
+                    return;
+                }
+                const data = await res.json();
+                const audio = new Audio('data:audio/mpeg;base64,' + data.audio);
+                await audio.play();
+                statusBar.textContent = '🟢 Online';
+            } catch (e) {
+                console.error('Audio playback error:', e);
+                statusBar.textContent = '🟢 Online (voice unavailable)';
+            }
+        }
+
+        async function sendMessage(text) {
+            if (!text || isProcessing) return;
+            isProcessing = true;
+            sendBtn.disabled = true;
+            micBtn.disabled = true;
+
             const msgDiv = document.createElement('div');
             msgDiv.className = 'message user-msg';
             msgDiv.textContent = text;
             chatHistory.appendChild(msgDiv);
             chatHistory.scrollTop = chatHistory.scrollHeight;
-            
-            ws.send(text);
             userInput.value = '';
+
+            statusBar.textContent = 'Thinking...';
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text }),
+                });
+
+                if (!res.ok) {
+                    throw new Error(await res.text());
+                }
+
+                const data = await res.json();
+                const aiMsgDiv = document.createElement('div');
+                aiMsgDiv.className = 'message ai-msg';
+                aiMsgDiv.textContent = data.text;
+                chatHistory.appendChild(aiMsgDiv);
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+
+                await playElevenLabsAudio(data.text);
+            } catch (e) {
+                console.error('Chat error:', e);
+                const errDiv = document.createElement('div');
+                errDiv.className = 'message ai-msg';
+                errDiv.textContent = 'Sorry, something went wrong. Please try again.';
+                chatHistory.appendChild(errDiv);
+                statusBar.textContent = '🔴 Error. Try again.';
+            } finally {
+                isProcessing = false;
+                sendBtn.disabled = false;
+                micBtn.disabled = false;
+            }
         }
 
         sendBtn.addEventListener('click', () => sendMessage(userInput.value.trim()));

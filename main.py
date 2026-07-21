@@ -1,59 +1,37 @@
 import os
 import base64
 import httpx
-import chromadb
 import uvicorn
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse
+from typing import Optional
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from dotenv import load_dotenv
 from groq import AsyncGroq
-
 
 # ==========================================
 # 1. SETUP & INITIALIZATION
 # ==========================================
 load_dotenv()
-from pathlib import Path
-
 
 app = FastAPI(title="Krish Kiran - Voice Agent")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Validate API Keys
 if not os.environ.get("GROQ_API_KEY") or not os.environ.get("ELEVENLABS_API_KEY"):
-    print("[WARNING] Missing API Keys in .env file!")
+    print("[WARNING] Missing API Keys in environment!")
 
 groq_client = AsyncGroq(api_key=os.environ.get("GROQ_API_KEY"))
 
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: list[WebSocket] = []
-
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-
-    def disconnect(self, websocket: WebSocket):
-        if websocket in self.active_connections:
-            self.active_connections.remove(websocket)
-
-manager = ConnectionManager()
-
 # ==========================================
-# 2. RAG PIPELINE (VECTOR DATABASE)
+# 2. RAG PIPELINE (IN-MEMORY)
 # ==========================================
-print("[INFO] Initializing ChromaDB Vector Store...")
-
-try:
-    chroma_client = chromadb.Client()
-    collection = chroma_client.get_or_create_collection(
-        name="portfolio_knowledge_base"
-    )
-    print("[INFO] ChromaDB initialized.")
-except Exception as e:
-    print(f"[ERROR] ChromaDB initialization failed: {e}")
-    raise
-
 portfolio_documents = [
     "Krish Kiran is an Applied AI Engineer specializing in Python, React, LangChain, and AI Architecture. He graduated with a B.Sc from Kumaun University and an MCA in AI/ML from Galgotias University.",
     "Contact Details: Email Krish at krishkiran0304@gmail.com or call +91 7895217955. His profiles include GitHub (Xercsus), LinkedIn, LeetCode, and HackerRank.",
@@ -64,48 +42,48 @@ portfolio_documents = [
     "Project Subscraft AI: A fully client-side web app with a real-time subtitle editor UI, animated Canvas rendering, and responsive controls.",
     "Project FingerFlick: A reusable cross-platform finger cricket game with mobile UI for matchmaking, live game state, and an engine backed by a 38-test suite.",
     "Project VibeTime: A timetable app with a custom notebook-aesthetic design system, reusable components, streak tracking, and a subscription paywall UI.",
-    "Certifications: Krish holds certifications in Python Basic (HackerRank), BCG GenAI Job Simulation (Forage), Deloitte Data Analytics, and Tata GenAI Powered Data Analytics."
+    "Certifications: Krish holds certifications in Python Basic (HackerRank), BCG GenAI Job Simulation (Forage), Deloitte Data Analytics, and Tata GenAI Powered Data Analytics.",
 ]
 
-try:
-    collection.upsert(
-        documents=portfolio_documents,
-        ids=[f"chunk_{i}" for i in range(len(portfolio_documents))]
-    )
-    print("[INFO] RAG Vector Store Ready.")
-except Exception as e:
-    print(f"[ERROR] Failed to populate ChromaDB: {e}")
-    raise
 
-print("[INFO] RAG Vector Store Ready.")
+def query_rag_database(user_query: str) -> str:
+    """Retrieves the top 2 most relevant chunks using keyword overlap."""
+    query_words = set(user_query.lower().split())
+    scored = []
+    for doc in portfolio_documents:
+        doc_words = set(doc.lower().split())
+        score = len(query_words & doc_words)
+        scored.append((score, doc))
+    scored.sort(key=lambda x: x[0], reverse=True)
+    top_docs = [doc for score, doc in scored[:2] if score > 0]
+    if not top_docs:
+        return portfolio_documents[0]
+    return " ".join(top_docs)
+
 
 # ==========================================
-# 3. AI AGENT FUNCTIONS
+# 3. REQUEST MODELS
 # ==========================================
-async def query_rag_database(user_query: str) -> str:
-    """Retrieves the top 2 most relevant chunks from the Vector DB."""
-    results = collection.query(
-        query_texts=[user_query],
-        n_results=2 
-    )
-    # Fail-safe if no documents match
-    if not results.get("documents") or not results["documents"][0]:
-        return "No specific details found in the portfolio."
-        
-    retrieved_context = " ".join(results["documents"][0])
-    print(f"[DEBUG] RAG Context: {retrieved_context}")
-    return retrieved_context
+class ChatRequest(BaseModel):
+    message: str
 
+
+class TTSRequest(BaseModel):
+    text: str
+
+
+# ==========================================
+# 4. AI AGENT FUNCTIONS
+# ==========================================
 async def guardrail_check(user_text: str) -> bool:
     """Uses Groq 8B for fast intent classification."""
-    print("[INFO] Running Guardrail...")
     try:
         response = await groq_client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[
                 {
-    "role": "system",
-    "content": """
+                    "role": "system",
+                    "content": """
 You are a security classifier.
 
 Return ONLY one word:
@@ -194,20 +172,21 @@ SAFE
 or
 
 UNSAFE
-"""
-}
+""",
+                }
             ],
             temperature=0.0,
-            max_tokens=5
+            max_tokens=5,
         )
         verdict = response.choices[0].message.content.strip().upper()
         return "SAFE" in verdict
     except Exception as e:
         print(f"[ERROR] Guardrail failed: {e}")
-        return True # Default to allow if guardrail fails
+        return True
 
-async def generate_rag_response(user_text: str, context: str):
-    """Streams the LLM response."""
+
+async def generate_rag_response(user_text: str, context: str) -> str:
+    """Generates the full LLM response."""
     system_prompt = f"""
 You are Krish Kiran's AI Portfolio Assistant.
 
@@ -253,41 +232,44 @@ Context:
 
 {context}
 """
-    
-    stream = await groq_client.chat.completions.create(
+
+    response = await groq_client.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_text}
+            {"role": "user", "content": user_text},
         ],
         temperature=0.3,
-        stream=True
+        max_tokens=300,
     )
-    async for chunk in stream:
-        if chunk.choices[0].delta.content is not None:
-            yield chunk.choices[0].delta.content
+    return response.choices[0].message.content
 
-async def text_to_speech(text: str) -> bytes:
+
+async def text_to_speech(text: str) -> Optional[bytes]:
     """Generates audio bytes via ElevenLabs API."""
-    voice_id = "ljX1ZrXuDIIRVcmiVSyR" 
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
-    
-    headers = {
-        "xi-api-key": os.environ.get("ELEVENLABS_API_KEY"),
-        "Content-Type": "application/json"
-    }
-    
-    data = {
-    "text": text,
-    "model_id": "eleven_multilingual_v2",
-    "voice_settings": {
-        "stability": 0.5,
-        "similarity_boost": 0.75
-    }
-}
-    if not os.getenv("ELEVENLABS_API_KEY"):
+    api_key = os.environ.get("ELEVENLABS_API_KEY")
+    if not api_key:
         print("[ERROR] ELEVENLABS_API_KEY is missing.")
-    
+        return None
+
+    voice_id = "ljX1ZrXuDIIRVcmiVSyR"
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+
+    headers = {
+        "xi-api-key": api_key,
+        "Content-Type": "application/json",
+        "Accept": "audio/mpeg",
+    }
+
+    data = {
+        "text": text,
+        "model_id": "eleven_turbo_v2_5",
+        "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.75,
+        },
+    }
+
     async with httpx.AsyncClient(timeout=30.0) as client:
         try:
             response = await client.post(url, json=data, headers=headers)
@@ -301,74 +283,68 @@ async def text_to_speech(text: str) -> bytes:
             print(f"[ERROR] ElevenLabs network error: {e}")
             return None
 
+
 # ==========================================
-# 4. WEBSOCKET ENDPOINT & ROUTES
+# 5. REST API ENDPOINTS
 # ==========================================
 @app.get("/")
 async def serve_frontend():
     html_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "index.html")
     if not os.path.exists(html_path):
-        return {"error": "index.html not found in the root directory."}
+        return JSONResponse({"error": "index.html not found."}, status_code=404)
     return FileResponse(html_path)
 
-@app.websocket("/stream-voice")
-async def voice_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
+
+@app.get("/api/health")
+async def health_check():
+    return {
+        "status": "ok",
+        "groq_configured": bool(os.environ.get("GROQ_API_KEY")),
+        "elevenlabs_configured": bool(os.environ.get("ELEVENLABS_API_KEY")),
+    }
+
+
+@app.post("/api/chat")
+async def chat_endpoint(request: ChatRequest):
+    user_text = request.message.strip()
+    if not user_text:
+        raise HTTPException(status_code=400, detail="Message cannot be empty.")
+
+    fallback = (
+        "I can help with questions about Krish Kiran's portfolio, education, "
+        "skills, experience, projects, certifications, technologies, career, "
+        "or contact information. Feel free to ask anything related to his professional profile."
+    )
+
     try:
-        while True:
-            # Receive text from the frontend
-            user_text = await websocket.receive_text()
-            print(f"\n[USER MESSAGE] {user_text}")
-            
-            # 1. Guardrail
-            is_safe = await guardrail_check(user_text)
-            if not is_safe:
-                fallback = (
-    "I can help with questions about Krish Kiran's portfolio, education, "
-    "skills, experience, projects, certifications, technologies, career, "
-    "or contact information. Feel free to ask anything related to his professional profile."
-)
-                await websocket.send_json({"type": "text_chunk", "data": fallback})
-                audio_bytes = await text_to_speech(fallback)
-                if audio_bytes:
-                    await websocket.send_json({"type": "audio", "data": base64.b64encode(audio_bytes).decode('utf-8')})
-                continue
+        is_safe = await guardrail_check(user_text)
+        if not is_safe:
+            return {"text": fallback, "blocked": True}
 
-            # 2. RAG
-            await websocket.send_json({"type": "status", "data": "Searching knowledge base..."})
-            relevant_context = await query_rag_database(user_text)
-            
-            # 3. LLM Generation
-            await websocket.send_json({"type": "status", "data": "Typing..."})
-            full_response = ""
-            async for chunk in generate_rag_response(user_text, relevant_context):
-                await websocket.send_json({"type": "text_chunk", "data": chunk})
-                full_response += chunk
-            
-            # 4. End Text Stream Marker
-            await websocket.send_json({"type": "text_end"})
-            
-            # 5. Text to Speech
-            await websocket.send_json({"type": "status", "data": "Generating audio..."})
-            audio_bytes = await text_to_speech(full_response)
-            if audio_bytes:
-                await websocket.send_json({
-                    "type": "audio", 
-                    "data": base64.b64encode(audio_bytes).decode('utf-8')
-                })
-            
-            await websocket.send_json({"type": "status", "data": "Idle"})
+        relevant_context = query_rag_database(user_text)
+        response_text = await generate_rag_response(user_text, relevant_context)
+        return {"text": response_text, "blocked": False}
 
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-        print("[INFO] Client disconnected.")
     except Exception as e:
-        print(f"[ERROR] Websocket loop crashed: {e}")
-        manager.disconnect(websocket)
+        print(f"[ERROR] Chat endpoint failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate response.")
+
+
+@app.post("/api/tts")
+async def tts_endpoint(request: TTSRequest):
+    text = request.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Text cannot be empty.")
+
+    audio_bytes = await text_to_speech(text)
+    if not audio_bytes:
+        raise HTTPException(status_code=502, detail="ElevenLabs TTS failed. Check API key and quota.")
+
+    return {"audio": base64.b64encode(audio_bytes).decode("utf-8")}
+
 
 # ==========================================
-# 5. SERVER RUNNER
+# 6. SERVER RUNNER (LOCAL DEV)
 # ==========================================
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)
-    
