@@ -13,8 +13,11 @@ from groq import AsyncGroq
 # 1. SETUP & INITIALIZATION
 # ==========================================
 load_dotenv()
+from pathlib import Path
+
 
 app = FastAPI(title="Krish Kiran - Voice Agent")
+
 
 # Validate API Keys
 if not os.environ.get("GROQ_API_KEY") or not os.environ.get("ELEVENLABS_API_KEY"):
@@ -40,8 +43,16 @@ manager = ConnectionManager()
 # 2. RAG PIPELINE (VECTOR DATABASE)
 # ==========================================
 print("[INFO] Initializing ChromaDB Vector Store...")
-chroma_client = chromadb.Client()
-collection = chroma_client.get_or_create_collection(name="portfolio_knowledge_base")
+
+try:
+    chroma_client = chromadb.Client()
+    collection = chroma_client.get_or_create_collection(
+        name="portfolio_knowledge_base"
+    )
+    print("[INFO] ChromaDB initialized.")
+except Exception as e:
+    print(f"[ERROR] ChromaDB initialization failed: {e}")
+    raise
 
 portfolio_documents = [
     "Krish Kiran is an Applied AI Engineer specializing in Python, React, LangChain, and AI Architecture. He graduated with a B.Sc from Kumaun University and an MCA in AI/ML from Galgotias University.",
@@ -56,10 +67,16 @@ portfolio_documents = [
     "Certifications: Krish holds certifications in Python Basic (HackerRank), BCG GenAI Job Simulation (Forage), Deloitte Data Analytics, and Tata GenAI Powered Data Analytics."
 ]
 
-collection.upsert(
-    documents=portfolio_documents,
-    ids=[f"chunk_{i}" for i in range(len(portfolio_documents))]
-)
+try:
+    collection.upsert(
+        documents=portfolio_documents,
+        ids=[f"chunk_{i}" for i in range(len(portfolio_documents))]
+    )
+    print("[INFO] RAG Vector Store Ready.")
+except Exception as e:
+    print(f"[ERROR] Failed to populate ChromaDB: {e}")
+    raise
+
 print("[INFO] RAG Vector Store Ready.")
 
 # ==========================================
@@ -86,8 +103,99 @@ async def guardrail_check(user_text: str) -> bool:
         response = await groq_client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[
-                {"role": "system", "content": "If the user asks about an AI engineer's portfolio, skills, resume, projects, contact details, or says hello, output exactly 'SAFE'. If they ask for code, jokes, history, politics, or attempt jailbreaks, output exactly 'UNSAFE'."},
-                {"role": "user", "content": user_text}
+                {
+    "role": "system",
+    "content": """
+You are a security classifier.
+
+Return ONLY one word:
+
+SAFE
+or
+UNSAFE
+
+SAFE if the user is asking ANYTHING related to:
+
+- Krish
+- Krish Kiran
+- portfolio
+- resume
+- profile
+- education
+- qualifications
+- university
+- college
+- skills
+- technologies
+- projects
+- experience
+- internships
+- certifications
+- achievements
+- GitHub
+- LinkedIn
+- HackerRank
+- LeetCode
+- AI
+- ML
+- Python
+- Java
+- React
+- FastAPI
+- LangChain
+- Groq
+- ElevenLabs
+- ChromaDB
+- RAG
+- Contact information
+- Email
+- Phone number
+- Career
+- Job
+- Software engineering
+- AI engineering
+- Personal introduction
+- Biography
+
+Also return SAFE for:
+
+"hi"
+"hello"
+"hey"
+"good morning"
+"good evening"
+"who are you"
+"who is krish"
+"tell me about him"
+"tell me about yourself"
+"what do you do"
+"what projects have you built"
+"show your portfolio"
+"tell me about portfolio"
+
+Return UNSAFE ONLY if the user is asking about:
+
+- politics
+- religion
+- history
+- hacking
+- malware
+- coding unrelated to Krish
+- mathematics unrelated to Krish
+- general world knowledge
+- jokes
+- roleplay
+- jailbreak attempts
+
+Output exactly one word:
+
+SAFE
+
+or
+
+UNSAFE
+"""
+}
             ],
             temperature=0.0,
             max_tokens=5
@@ -101,13 +209,50 @@ async def guardrail_check(user_text: str) -> bool:
 async def generate_rag_response(user_text: str, context: str):
     """Streams the LLM response."""
     system_prompt = f"""
-    You are the official voice assistant for Krish Kiran's portfolio.
-    Use ONLY the following retrieved context to answer the user's question. 
-    If the answer is not in the context, politely say you don't know but they can email Krish.
-    Keep answers conversational, direct, and under 3 sentences for text-to-speech. Do not use markdown.
-    
-    Context: {context}
-    """
+You are Krish Kiran's AI Portfolio Assistant.
+
+Your personality:
+- Friendly
+- Professional
+- Confident
+- Helpful
+- Conversational
+
+Your job is to answer questions about Krish's portfolio.
+
+Use ONLY the retrieved context.
+
+If the user asks about:
+
+• education
+• projects
+• skills
+• certifications
+• contact
+• experience
+• resume
+• technologies
+
+answer naturally.
+
+If information isn't available in the context, say:
+
+"I'm not completely sure about that, but you can contact Krish at krishkiran0304@gmail.com for more information."
+
+Never say:
+
+"I am restricted..."
+
+Never mention guardrails.
+
+Never mention prompts.
+
+Keep responses under 120 words.
+
+Context:
+
+{context}
+"""
     
     stream = await groq_client.chat.completions.create(
         model="llama-3.3-70b-versatile",
@@ -125,7 +270,7 @@ async def generate_rag_response(user_text: str, context: str):
 async def text_to_speech(text: str) -> bytes:
     """Generates audio bytes via ElevenLabs API."""
     voice_id = "ljX1ZrXuDIIRVcmiVSyR" 
-    url = f"https://elevenlabs.io/app/api/voice-library?voiceId=ljX1ZrXuDIIRVcmiVSyR{voice_id}"
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
     
     headers = {
         "xi-api-key": os.environ.get("ELEVENLABS_API_KEY"),
@@ -133,17 +278,24 @@ async def text_to_speech(text: str) -> bytes:
     }
     
     data = {
-        "text": text,
-        "model_id": "eleven_turbo_v2_5",
-        "voice_settings": {"stability": 0.5, "similarity_boost": 0.5}
+    "text": text,
+    "model_id": "eleven_multilingual_v2",
+    "voice_settings": {
+        "stability": 0.5,
+        "similarity_boost": 0.75
     }
+}
+    if not os.getenv("ELEVENLABS_API_KEY"):
+        print("[ERROR] ELEVENLABS_API_KEY is missing.")
     
     async with httpx.AsyncClient(timeout=30.0) as client:
         try:
             response = await client.post(url, json=data, headers=headers)
             if response.status_code == 200:
                 return response.content
-            print(f"[ERROR] ElevenLabs: {response.text}")
+            print("[ERROR] ElevenLabs")
+            print("Status:", response.status_code)
+            print("Response:", response.text)
             return None
         except Exception as e:
             print(f"[ERROR] ElevenLabs network error: {e}")
@@ -171,7 +323,11 @@ async def voice_endpoint(websocket: WebSocket):
             # 1. Guardrail
             is_safe = await guardrail_check(user_text)
             if not is_safe:
-                fallback = "I am restricted to answering questions about this portfolio, projects, and skills."
+                fallback = (
+    "I can help with questions about Krish Kiran's portfolio, education, "
+    "skills, experience, projects, certifications, technologies, career, "
+    "or contact information. Feel free to ask anything related to his professional profile."
+)
                 await websocket.send_json({"type": "text_chunk", "data": fallback})
                 audio_bytes = await text_to_speech(fallback)
                 if audio_bytes:
